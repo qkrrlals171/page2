@@ -1,0 +1,66 @@
+name: 매일 스탯 갱신
+
+on:
+  schedule:
+    # 시각은 UTC 기준입니다. 정규시즌 기간(3~10월)에만 실행합니다.
+    - cron: "40 14 * 3-10 *"   # 23:40 KST: 그날 경기 반영
+    - cron: "10 0 * 3-10 *"    # 09:10 KST: 밤사이 기록 정정 반영
+  workflow_dispatch:           # Actions 탭에서 수동 실행
+    inputs:
+      season:
+        description: "시즌 (비우면 올해, 개막 전이면 작년)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: 패키지 설치
+        run: pip install -r requirements.txt
+
+      - name: 테스트
+        run: python -m pytest -q
+
+      - name: 기록 받기 · 계산 · 페이지 생성
+        env:
+          SEASON: ${{ github.event.inputs.season }}
+        run: |
+          if [ -n "$SEASON" ]; then
+            python -m kbostats -v update --season "$SEASON"
+          else
+            python -m kbostats -v update
+          fi
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

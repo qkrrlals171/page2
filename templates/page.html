@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__SEASON__ KBO 스탯</title>
+<style>
+:root {
+  --bg: #f7f7f5; --surface: #ffffff; --surface-2: #f0f0ed; --line: #e2e2dd;
+  --text: #1c1c1a; --muted: #6b6b66; --accent: #1f5fbf; --accent-soft: #e6eefb;
+  --good: #1d7a46; --bad: #b4372f; --row-hover: #f4f6fa;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #141413; --surface: #1d1d1b; --surface-2: #262624; --line: #33332f;
+    --text: #ececea; --muted: #9a9a94; --accent: #7fa8ee; --accent-soft: #23304a;
+    --good: #5cc48a; --bad: #ec7d74; --row-hover: #22262e;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #141413; --surface: #1d1d1b; --surface-2: #262624; --line: #33332f;
+  --text: #ececea; --muted: #9a9a94; --accent: #7fa8ee; --accent-soft: #23304a;
+  --good: #5cc48a; --bad: #ec7d74; --row-hover: #22262e;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
+}
+.wrap { max-width: 1400px; margin: 0 auto; padding: 20px 16px 48px; }
+header h1 { font-size: 22px; margin: 0 0 2px; letter-spacing: -0.01em; }
+header p { margin: 0; color: var(--muted); font-size: 13px; }
+.tabs { display: flex; gap: 4px; margin: 20px 0 12px; border-bottom: 1px solid var(--line); }
+.tabs button {
+  border: 0; background: none; color: var(--muted); font: inherit; font-weight: 600;
+  padding: 8px 14px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.tabs button[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+.controls { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin-bottom: 12px; }
+.controls label { display: inline-flex; gap: 6px; align-items: center; color: var(--muted); font-size: 13px; }
+select, input[type="search"], input[type="number"] {
+  font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 6px; padding: 5px 8px;
+}
+input[type="number"] { width: 72px; }
+input[type="search"] { width: 140px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; background: var(--surface); color: var(--muted); font: inherit; padding: 5px 10px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.count { color: var(--muted); font-size: 13px; margin-left: auto; }
+.table-box { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: auto; max-height: 75vh; }
+table { border-collapse: separate; border-spacing: 0; width: 100%; font-variant-numeric: tabular-nums; }
+th, td { padding: 6px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); }
+th {
+  position: sticky; top: 0; z-index: 2; background: var(--surface-2); font-size: 12px; color: var(--muted);
+  font-weight: 600; cursor: pointer; user-select: none;
+}
+th[aria-sort] { color: var(--accent); }
+th[aria-sort="descending"]::after { content: " ▼"; font-size: 9px; }
+th[aria-sort="ascending"]::after { content: " ▲"; font-size: 9px; }
+td.key { font-weight: 600; }
+th.key { color: var(--text); }
+td.text, th.text { text-align: left; }
+td.rank, th.rank { color: var(--muted); text-align: right; width: 36px; }
+.sticky { position: sticky; left: 0; z-index: 1; background: var(--surface); }
+th.sticky { z-index: 3; background: var(--surface-2); }
+.sticky.name { left: 36px; box-shadow: 1px 0 0 var(--line); }
+tbody tr:hover td { background: var(--row-hover); }
+td.hi { color: var(--good); font-weight: 600; }
+td.lo { color: var(--bad); }
+th.group-start, td.group-start { border-left: 2px solid var(--line); }
+.empty { padding: 32px; text-align: center; color: var(--muted); }
+.panel { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); align-items: start; }
+@media (min-width: 980px) { .card.wide { grid-column: span 2; } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 14px 16px; overflow: auto; }
+.card h2 { font-size: 15px; margin: 0 0 8px; }
+.card p { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+.card table th { position: static; cursor: default; }
+footer { margin-top: 28px; color: var(--muted); font-size: 12px; line-height: 1.7; }
+footer a { color: var(--accent); }
+[hidden] { display: none !important; }
+@media (max-width: 640px) {
+  .wrap { padding: 16px 16px 40px; }
+  header h1 { font-size: 19px; }
+  .count { margin-left: 0; width: 100%; }
+  th, td { padding: 5px 8px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span id="season"></span> KBO 정규시즌 스탯</h1>
+    <p id="meta"></p>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="batting" aria-selected="true">타자</button>
+    <button role="tab" data-tab="pitching" aria-selected="false">투수</button>
+    <button role="tab" data-tab="league" aria-selected="false">리그 · 상수</button>
+  </nav>
+
+  <section id="table-view">
+    <div class="controls">
+      <label>팀 <select id="team"><option value="">전체</option></select></label>
+      <label><input type="checkbox" id="qualified" checked> 규정만</label>
+      <label id="min-wrap" hidden>최소 <span id="min-unit">PA</span> <input type="number" id="min" min="0" value="0"></label>
+      <input type="search" id="search" placeholder="선수 검색">
+      <div class="seg" role="group" aria-label="열 보기">
+        <button data-view="all" aria-pressed="true">전체</button>
+        <button data-view="classic" aria-pressed="false">클래식</button>
+        <button data-view="saber" aria-pressed="false">세이버</button>
+      </div>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="table-box"><table id="grid"><thead></thead><tbody></tbody></table></div>
+  </section>
+
+  <section id="league-view" hidden>
+    <div class="panel" id="league-panel"></div>
+  </section>
+
+  <footer id="footer"></footer>
+</div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script>
+(function () {
+  "use strict";
+  var D = JSON.parse(document.getElementById("data").textContent);
+  var state = { tab: "batting", view: "all", team: "", qualified: true, min: 0, q: "", sort: {} };
+  state.sort.batting = { key: "wRC+", dir: -1 };
+  state.sort.pitching = { key: "ERA", dir: 1 };
+
+  var $ = function (id) { return document.getElementById(id); };
+  var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); };
+
+  function fmt(v, f) {
+    if (v === null || v === undefined || (typeof v === "number" && !isFinite(v))) return "-";
+    switch (f) {
+      case "int": return Math.round(v).toLocaleString("ko-KR");
+      case "rate3": var s = v.toFixed(3); return (v >= 0 && v < 1) ? s.slice(1) : s;
+      case "pct1": return (v * 100).toFixed(1) + "%";
+      case "dec1": return v.toFixed(1);
+      case "dec2": return v.toFixed(2);
+      case "ip": var w = Math.floor(v + 1e-9), t = Math.round((v - w) * 3);
+        if (t === 3) { w += 1; t = 0; } return t ? (w ? w + " " + t + "/3" : t + "/3") : String(w);
+      default: return esc(v);
+    }
+  }
+
+  // 머리말
+  $("season").textContent = D.season;
+  $("meta").textContent = D.as_of + " 기준 · 생성 " + D.generated_at;
+
+  // 팀 목록
+  var teams = {};
+  D.batting.rows.concat(D.pitching.rows).forEach(function (r) { if (r.team) teams[r.team] = 1; });
+  Object.keys(teams).sort().forEach(function (t) {
+    var o = document.createElement("option"); o.value = t; o.textContent = t; $("team").appendChild(o);
+  });
+
+  function data() { return D[state.tab]; }
+
+  function visibleColumns() {
+    return data().columns.filter(function (c) {
+      return c.group === "base" || c.group === "key" || state.view === "all" || c.group === state.view;
+    });
+  }
+
+  function rows() {
+    var unit = state.tab === "batting" ? "PA" : "IP";
+    var q = state.q.trim();
+    var list = data().rows.filter(function (r) {
+      if (state.team && r.team !== state.team) return false;
+      if (state.qualified && !r.qualified) return false;
+      if (!state.qualified && (r[unit] || 0) < state.min) return false;
+      if (q && String(r.name).indexOf(q) < 0) return false;
+      return true;
+    });
+    var s = state.sort[state.tab];
+    list.sort(function (a, b) {
+      var x = a[s.key], y = b[s.key];
+      var xn = x === null || x === undefined, yn = y === null || y === undefined;
+      if (xn || yn) return xn === yn ? 0 : (xn ? 1 : -1);
+      if (typeof x === "string") return s.dir * x.localeCompare(y, "ko");
+      return s.dir * (x - y);
+    });
+    return list;
+  }
+
+  // 리그 평균 대비 색: wRC+/OPS+ 는 100 기준, ERA-/FIP- 는 낮을수록 좋음
+  function tone(c, v) {
+    if (v === null || v === undefined) return "";
+    if (c.key === "wRC+" || c.key === "OPS+") return v >= 130 ? "hi" : (v < 80 ? "lo" : "");
+    if (c.key === "ERA-" || c.key === "FIP-") return v <= 80 ? "hi" : (v > 120 ? "lo" : "");
+    return "";
+  }
+
+  function draw() {
+    var cols = visibleColumns(), list = rows(), s = state.sort[state.tab];
+    var head = '<tr><th class="rank sticky">#</th>';
+    var prev = null;
+    cols.forEach(function (c) {
+      var cls = [c.fmt === "text" ? "text" : "", c.key === "name" ? "sticky name" : "", c.group === "key" ? "key" : ""];
+      if (prev && prev !== c.group && c.group !== "base") cls.push("group-start");
+      prev = c.group;
+      var sort = s.key === c.key ? ' aria-sort="' + (s.dir < 0 ? "descending" : "ascending") + '"' : "";
+      head += '<th class="' + cls.join(" ") + '" data-key="' + esc(c.key) + '" title="' + esc(c.title) + '"' + sort + ">" + esc(c.label) + "</th>";
+    });
+    head += "</tr>";
+    document.querySelector("#grid thead").innerHTML = head;
+
+    var body = "";
+    list.forEach(function (r, i) {
+      body += '<tr><td class="rank sticky">' + (i + 1) + "</td>";
+      var p = null;
+      cols.forEach(function (c) {
+        var cls = [c.fmt === "text" ? "text" : "", c.key === "name" ? "sticky name" : "", c.group === "key" ? "key" : "", tone(c, r[c.key])];
+        if (p && p !== c.group && c.group !== "base") cls.push("group-start");
+        p = c.group;
+        body += '<td class="' + cls.join(" ") + '">' + fmt(r[c.key], c.fmt) + "</td>";
+      });
+      body += "</tr>";
+    });
+    if (!list.length) body = '<tr><td class="empty" colspan="' + (cols.length + 1) + '">조건에 맞는 선수가 없습니다</td></tr>';
+    document.querySelector("#grid tbody").innerHTML = body;
+    $("count").textContent = list.length + "명";
+  }
+
+  document.querySelector("#grid thead").addEventListener("click", function (e) {
+    var th = e.target.closest("th[data-key]"); if (!th) return;
+    var key = th.getAttribute("data-key");
+    var col = data().columns.filter(function (c) { return c.key === key; })[0];
+    var s = state.sort[state.tab];
+    if (s.key === key) s.dir = -s.dir;
+    else { s.key = key; s.dir = col.fmt === "text" ? 1 : (col.low ? 1 : -1); }
+    draw();
+  });
+
+  // 탭
+  Array.prototype.forEach.call(document.querySelectorAll(".tabs button"), function (b) {
+    b.addEventListener("click", function () {
+      state.tab = b.getAttribute("data-tab");
+      Array.prototype.forEach.call(document.querySelectorAll(".tabs button"), function (x) {
+        x.setAttribute("aria-selected", String(x === b));
+      });
+      var league = state.tab === "league";
+      $("table-view").hidden = league; $("league-view").hidden = !league;
+      if (!league) { $("min-unit").textContent = state.tab === "batting" ? "PA" : "IP"; draw(); }
+    });
+  });
+
+  // 보기 전환
+  Array.prototype.forEach.call(document.querySelectorAll(".seg button"), function (b) {
+    b.addEventListener("click", function () {
+      state.view = b.getAttribute("data-view");
+      Array.prototype.forEach.call(document.querySelectorAll(".seg button"), function (x) {
+        x.setAttribute("aria-pressed", String(x === b));
+      });
+      draw();
+    });
+  });
+
+  $("team").addEventListener("change", function () { state.team = this.value; draw(); });
+  $("qualified").addEventListener("change", function () { state.qualified = this.checked; $("min-wrap").hidden = this.checked; draw(); });
+  $("min").addEventListener("input", function () { state.min = Number(this.value) || 0; draw(); });
+  $("search").addEventListener("input", function () { state.q = this.value; draw(); });
+
+  // 리그 · 상수 탭
+  function kv(title, pairs, note) {
+    var h = '<div class="card"><h2>' + esc(title) + "</h2><table><tbody>";
+    pairs.forEach(function (p) { h += '<tr><td class="text">' + esc(p[0]) + "</td><td>" + p[1] + "</td></tr>"; });
+    return h + "</tbody></table>" + (note ? "<p>" + note + "</p>" : "") + "</div>";
+  }
+  function league() {
+    var c = D.context, b = c.batting, p = c.pitching, w = b.woba_weights, html = "";
+    html += kv("리그 타격", [
+      ["타율", fmt(b.lg_avg, "rate3")], ["출루율 (= 리그 wOBA)", fmt(b.lg_obp, "rate3")],
+      ["장타율", fmt(b.lg_slg, "rate3")], ["타석당 득점 (R/PA)", b.lg_r_pa.toFixed(4)],
+      ["wOBA 스케일", b.woba_scale.toFixed(3)], ["K%", fmt(b.lg_k_pct, "pct1")], ["BB%", fmt(b.lg_bb_pct, "pct1")]
+    ]);
+    html += kv("리그 투구", [
+      ["평균자책점", fmt(p.lg_era, "dec2")], ["9이닝당 실점", fmt(p.lg_ra9, "dec2")],
+      ["FIP 상수", p.fip_constant.toFixed(3)], ["9이닝당 피홈런", fmt(p.lg_hr9, "dec2")]
+    ]);
+    html += kv("wOBA 가중치 (" + D.season + ")", [
+      ["볼넷 (고의4구 제외)", w.BB.toFixed(3)], ["몸에 맞는 공", w.HBP.toFixed(3)], ["단타", w["1B"].toFixed(3)],
+      ["2루타", w["2B"].toFixed(3)], ["3루타", w["3B"].toFixed(3)], ["홈런", w.HR.toFixed(3)]
+    ], "득점 가치는 " + D.weights.seasons.join("·") + " 시즌 플레이별 데이터(" + D.weights.plate_appearances.toLocaleString("ko-KR") +
+       "타석)로 계산하고, 리그 wOBA가 리그 출루율과 같아지도록 이번 시즌 스케일을 곱했습니다.");
+
+    if (D.parks) {
+      var ph = '<div class="card wide"><h2>파크팩터 (' + D.parks.seasons.join("·") + ")</h2><table><thead><tr>" +
+        '<th class="text">구장</th><th class="text">팀</th><th>홈경기</th><th>원값</th><th>회귀 후</th><th>wRC+용</th></tr></thead><tbody>';
+      Object.keys(D.parks.parks).sort(function (a, b) { return D.parks.parks[b].pf_regressed - D.parks.parks[a].pf_regressed; })
+        .forEach(function (k) {
+          var r = D.parks.parks[k];
+          ph += '<tr><td class="text">' + esc(k) + '</td><td class="text">' + esc(r.teams.join(", ")) + "</td><td>" + r.games +
+            "</td><td>" + r.pf.toFixed(3) + "</td><td>" + r.pf_regressed.toFixed(3) + "</td><td>" + r.pf_half.toFixed(3) + "</td></tr>";
+        });
+      html += ph + "</tbody></table><p>홈·원정 경기당 득점 비율을 원정 구장 보정 후 홈 경기 " + D.parks.regression_games +
+        "경기만큼 1로 회귀했습니다. 타자·투수는 경기의 절반만 홈에서 뛰므로 (1 + 회귀 후 값) / 2 를 씁니다.</p></div>";
+    } else {
+      html += kv("파크팩터", [["상태", "미적용 (모두 1.000)"]], "build-parks 를 실행하면 구장 보정이 적용됩니다.");
+    }
+
+    var re = D.weights.run_expectancy, bases = ["___", "1__", "_2_", "12_", "__3", "1_3", "_23", "123"];
+    var names = { "___": "주자 없음", "1__": "1루", "_2_": "2루", "12_": "1·2루", "__3": "3루", "1_3": "1·3루", "_23": "2·3루", "123": "만루" };
+    var rh = '<div class="card"><h2>득점 기대값 (RE24)</h2><table><thead><tr><th class="text">주자</th><th>0아웃</th><th>1아웃</th><th>2아웃</th></tr></thead><tbody>';
+    bases.forEach(function (b) { rh += '<tr><td class="text">' + names[b] + "</td><td>" + re["0"][b].toFixed(3) + "</td><td>" + re["1"][b].toFixed(3) + "</td><td>" + re["2"][b].toFixed(3) + "</td></tr>"; });
+    html += rh + "</tbody></table><p>각 상황에서 그 이닝이 끝날 때까지 평균 득점입니다.</p></div>";
+    $("league-panel").innerHTML = html;
+  }
+
+  $("footer").innerHTML =
+    "기록: KBO 공식 기록실 시즌 누적 기록 (개인·비상업 용도로 수집). " +
+    "가중치 계산용 플레이별 데이터: slothman3878/kbo_playbyplay (CC BY 4.0). " +
+    "wRC+·OPS+·ERA-·FIP- 는 이적 선수도 현재 소속팀 구장 기준으로 보정합니다. 공식 기록과 계산 방식이 달라 일부 값은 다른 사이트와 다를 수 있습니다.";
+
+  league();
+  draw();
+})();
+</script>
+</body>
+</html>

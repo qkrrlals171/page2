@@ -1,0 +1,18 @@
+[project]
+name = "kbostats"
+version = "0.1.0"
+description = "KBO 클래식·세이버 스탯 계산과 정적 페이지 생성"
+requires-python = ">=3.10"
+dependencies = ["pandas>=2.1", "pyarrow>=14", "requests>=2.31"]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[project.scripts]
+kbostats = "kbostats.cli:main"
+
+[tool.setuptools]
+packages = ["kbostats"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

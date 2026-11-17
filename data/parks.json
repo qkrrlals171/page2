@@ -1,0 +1,144 @@
+{
+  "seasons": [
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "regression_games": 100,
+  "parks": {
+    "고척": {
+      "games": 288,
+      "home_rpg": 9.021,
+      "road_rpg": 10.496,
+      "raw_ratio": 0.8594,
+      "pf": 0.8708,
+      "pf_regressed": 0.9041,
+      "pf_half": 0.952,
+      "teams": [
+        "키움"
+      ]
+    },
+    "광주": {
+      "games": 288,
+      "home_rpg": 9.83,
+      "road_rpg": 10.333,
+      "raw_ratio": 0.9513,
+      "pf": 0.9538,
+      "pf_regressed": 0.9657,
+      "pf_half": 0.9829,
+      "teams": [
+        "KIA"
+      ]
+    },
+    "대구": {
+      "games": 275,
+      "home_rpg": 10.502,
+      "road_rpg": 9.47,
+      "raw_ratio": 1.1089,
+      "pf": 1.094,
+      "pf_regressed": 1.0689,
+      "pf_half": 1.0345,
+      "teams": [
+        "삼성"
+      ]
+    },
+    "대전": {
+      "games": 144,
+      "home_rpg": 10.674,
+      "road_rpg": 9.525,
+      "raw_ratio": 1.1206,
+      "pf": 1.1124,
+      "pf_regressed": 1.0663,
+      "pf_half": 1.0332,
+      "teams": [
+        "한화"
+      ]
+    },
+    "문학": {
+      "games": 288,
+      "home_rpg": 9.906,
+      "road_rpg": 9.587,
+      "raw_ratio": 1.0333,
+      "pf": 1.0285,
+      "pf_regressed": 1.0211,
+      "pf_half": 1.0106,
+      "teams": [
+        "SSG"
+      ]
+    },
+    "사직": {
+      "games": 276,
+      "home_rpg": 10.779,
+      "road_rpg": 9.358,
+      "raw_ratio": 1.1519,
+      "pf": 1.1329,
+      "pf_regressed": 1.0976,
+      "pf_half": 1.0488,
+      "teams": [
+        "롯데"
+      ]
+    },
+    "수원": {
+      "games": 288,
+      "home_rpg": 10.069,
+      "road_rpg": 9.495,
+      "raw_ratio": 1.0605,
+      "pf": 1.0511,
+      "pf_regressed": 1.0379,
+      "pf_half": 1.0189,
+      "teams": [
+        "KT"
+      ]
+    },
+    "잠실": {
+      "games": 576,
+      "home_rpg": 9.257,
+      "road_rpg": 10.325,
+      "raw_ratio": 0.8966,
+      "pf": 0.9126,
+      "pf_regressed": 0.9256,
+      "pf_half": 0.9628,
+      "teams": [
+        "LG",
+        "두산"
+      ]
+    },
+    "창원": {
+      "games": 279,
+      "home_rpg": 10.265,
+      "road_rpg": 10.214,
+      "raw_ratio": 1.005,
+      "pf": 1.0028,
+      "pf_regressed": 1.002,
+      "pf_half": 1.001,
+      "teams": [
+        "NC"
+      ]
+    },
+    "한밭": {
+      "games": 139,
+      "home_rpg": 9.827,
+      "road_rpg": 9.868,
+      "raw_ratio": 0.9959,
+      "pf": 0.9888,
+      "pf_regressed": 0.9935,
+      "pf_half": 0.9967,
+      "teams": [
+        "한화"
+      ]
+    }
+  },
+  "team_park": {
+    "키움": "고척",
+    "KIA": "광주",
+    "LG": "잠실",
+    "NC": "창원",
+    "롯데": "사직",
+    "삼성": "대구",
+    "한화": "대전",
+    "SSG": "문학",
+    "두산": "잠실",
+    "KT": "수원"
+  }
+}
