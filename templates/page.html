@@ -27,7 +27,7 @@ body {
   margin: 0; background: var(--bg); color: var(--text);
   font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif;
 }
-.wrap { max-width: 1400px; margin: 0 auto; padding: 20px 16px 48px; }
+.wrap { max-width: 1800px; margin: 0 auto; padding: 20px 16px 48px; }
 header h1 { font-size: 22px; margin: 0 0 2px; letter-spacing: -0.01em; }
 header p { margin: 0; color: var(--muted); font-size: 13px; }
 .tabs { display: flex; gap: 4px; margin: 20px 0 12px; border-bottom: 1px solid var(--line); }
@@ -62,10 +62,15 @@ th[aria-sort="ascending"]::after { content: " ▲"; font-size: 9px; }
 td.key { font-weight: 600; }
 th.key { color: var(--text); }
 td.text, th.text { text-align: left; }
-td.rank, th.rank { color: var(--muted); text-align: right; width: 36px; }
-.sticky { position: sticky; left: 0; z-index: 1; background: var(--surface); }
+td.rank, th.rank { color: var(--muted); text-align: right; }
+/* 화면보다 넓으면 단계적으로 촘촘하게 (JS가 fit()에서 결정) */
+table.compact th, table.compact td { padding: 5px 6px; font-size: 13px; }
+table.dense th, table.dense td { padding: 4px 4px; font-size: 12px; }
+table.dense th { font-size: 11px; }
+/* 왼쪽 고정 열: left 값은 JS가 실제 열 너비로 계산 */
+.sticky { position: sticky; z-index: 1; background: var(--surface); }
 th.sticky { z-index: 3; background: var(--surface-2); }
-.sticky.name { left: 36px; box-shadow: 1px 0 0 var(--line); }
+.sticky-last { box-shadow: 1px 0 0 var(--line); }
 tbody tr:hover td { background: var(--row-hover); }
 td.hi { color: var(--good); font-weight: 600; }
 td.lo { color: var(--bad); }
@@ -198,26 +203,40 @@ footer a { color: var(--accent); }
     return "";
   }
 
+  var box = document.querySelector(".table-box"), grid = $("grid");
+
+  // 왼쪽에 고정할 열: 순위·선수는 항상, 넓은 화면에서는 팀·핵심 지표(wRC+/FIP)도
+  function isSticky(c) {
+    if (c.key === "name") return true;
+    return box.clientWidth >= 720 && (c.key === "team" || c.group === "key");
+  }
+
   function draw() {
     var cols = visibleColumns(), list = rows(), s = state.sort[state.tab];
+    var stickyCount = cols.filter(isSticky).length;
+    function classes(c, idx, extra) {
+      var cls = [c.fmt === "text" ? "text" : "", c.group === "key" ? "key" : ""].concat(extra || []);
+      if (isSticky(c)) { cls.push("sticky"); if (idx === stickyCount) cls.push("sticky-last"); }
+      return cls;
+    }
     var head = '<tr><th class="rank sticky">#</th>';
-    var prev = null;
+    var prev = null, n = 0;
     cols.forEach(function (c) {
-      var cls = [c.fmt === "text" ? "text" : "", c.key === "name" ? "sticky name" : "", c.group === "key" ? "key" : ""];
+      var cls = classes(c, isSticky(c) ? ++n : -1);
       if (prev && prev !== c.group && c.group !== "base") cls.push("group-start");
       prev = c.group;
       var sort = s.key === c.key ? ' aria-sort="' + (s.dir < 0 ? "descending" : "ascending") + '"' : "";
       head += '<th class="' + cls.join(" ") + '" data-key="' + esc(c.key) + '" title="' + esc(c.title) + '"' + sort + ">" + esc(c.label) + "</th>";
     });
     head += "</tr>";
-    document.querySelector("#grid thead").innerHTML = head;
+    grid.tHead.innerHTML = head;
 
     var body = "";
     list.forEach(function (r, i) {
       body += '<tr><td class="rank sticky">' + (i + 1) + "</td>";
-      var p = null;
+      var p = null, k = 0;
       cols.forEach(function (c) {
-        var cls = [c.fmt === "text" ? "text" : "", c.key === "name" ? "sticky name" : "", c.group === "key" ? "key" : "", tone(c, r[c.key])];
+        var cls = classes(c, isSticky(c) ? ++k : -1, [tone(c, r[c.key])]);
         if (p && p !== c.group && c.group !== "base") cls.push("group-start");
         p = c.group;
         body += '<td class="' + cls.join(" ") + '">' + fmt(r[c.key], c.fmt) + "</td>";
@@ -225,11 +244,32 @@ footer a { color: var(--accent); }
       body += "</tr>";
     });
     if (!list.length) body = '<tr><td class="empty" colspan="' + (cols.length + 1) + '">조건에 맞는 선수가 없습니다</td></tr>';
-    document.querySelector("#grid tbody").innerHTML = body;
+    grid.tBodies[0].innerHTML = body;
     $("count").textContent = list.length + "명";
+    fit();
   }
 
-  document.querySelector("#grid thead").addEventListener("click", function (e) {
+  // 표가 상자보다 넓으면 촘촘하게(compact → dense) 만들고, 고정 열의 left 위치를 실제 너비로 맞춘다
+  function fit() {
+    grid.classList.remove("compact", "dense");
+    if (grid.scrollWidth > box.clientWidth) grid.classList.add("compact");
+    if (grid.scrollWidth > box.clientWidth) { grid.classList.remove("compact"); grid.classList.add("dense"); }
+    var lefts = [], left = 0;
+    Array.prototype.forEach.call(grid.tHead.querySelectorAll("th.sticky"), function (th) {
+      lefts.push(left); th.style.left = left + "px"; left += th.offsetWidth;
+    });
+    Array.prototype.forEach.call(grid.tBodies[0].rows, function (tr) {
+      Array.prototype.forEach.call(tr.querySelectorAll("td.sticky"), function (td, i) { td.style.left = lefts[i] + "px"; });
+    });
+  }
+
+  var resizeTimer = null;
+  window.addEventListener("resize", function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () { if (state.tab !== "league") draw(); }, 150);
+  });
+
+  grid.tHead.addEventListener("click", function (e) {
     var th = e.target.closest("th[data-key]"); if (!th) return;
     var key = th.getAttribute("data-key");
     var col = data().columns.filter(function (c) { return c.key === key; })[0];
